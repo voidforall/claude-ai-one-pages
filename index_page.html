@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Categories Index</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .category-tab {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-tab:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .category-tab.active {
+            background-color: #2c3e50;
+        }
+
+        .category-content {
+            display: none;
+        }
+
+        .category-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .websites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .website-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .website-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .website-logo {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .website-logo img {
+            max-width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+        }
+
+        .website-info {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .website-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .website-description {
+            color: #666;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+
+        .website-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            font-weight: 500;
+            margin-top: auto;
+        }
+
+        .website-link:hover {
+            background-color: #2980b9;
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px 0 0 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+        }
+
+        .search-button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 25px 25px 0;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: #2980b9;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .websites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .category-tab {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .websites-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Website Categories Index</h1>
+        <p>Discover the best websites across various categories</p>
+    </header>
+
+    <div class="container">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="Search websites...">
+                <button id="search-button" class="search-button">Search</button>
+            </div>
+        </div>
+
+        <div class="category-tabs" id="category-tabs">
+            <!-- Tabs will be generated by JavaScript -->
+        </div>
+
+        <div id="categories-container">
+            <!-- Category content will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <footer>
+        <p>Website Categories Index &copy; 2023 | Created with HTML, CSS & JavaScript</p>
+        <p>All logos and trademarks belong to their respective owners</p>
+    </footer>
+
+    <script>
+        // Website data organized by categories
+        const websiteCategories = [
+            {
+                id: "sports",
+                name: "Sports",
+                websites: [
+                    {
+                        title: "ESPN",
+                        description: "The worldwide leader in sports coverage, providing news, scores, highlights, and analysis across all major sports leagues and events.",
+                        logo: "https://a.espncdn.com/combiner/i?img=/i/espn/espn_logos/espn_red.png",
+                        url: "https://www.espn.com/"
+                    },
+                    {
+                        title: "BBC Sport",
+                        description: "Comprehensive sports coverage from the BBC, featuring live sports news, results, fixtures, video, audio and analysis on football, cricket, rugby, F1, and more.",
+                        logo: "https://static.files.bbci.co.uk/ws/simorgh-assets/public/sport/images/metadata/poster-1024x576.png",
+                        url: "https://www.bbc.com/sport"
+                    },
+                    {
+                        title: "NBA",
+                        description: "The official site of the National Basketball Association. Includes news, features, multimedia, player profiles, game schedules, and statistics.",
+                        logo: "https://cdn.nba.com/logos/nba/nba-logoman-75-word_white.svg",
+                        url: "https://www.nba.com/"
+                    },
+                    {
+                        title: "FIFA",
+                        description: "The official website of FIFA, the governing body of football, with news, national associations, competitions, results, fixtures, development, organization, and more.",
+                        logo: "https://digitalhub.fifa.com/transform/3a170b69-b0b5-4d0c-bca0-85880a60ea1a/FIFA-logo-white-on-blue",
+                        url: "https://www.fifa.com/"
+                    }
+                ]
+            },
+            {
+                id: "news",
+                name: "News",
+                websites: [
+                    {
+                        title: "CNN",
+                        description: "Cable News Network providing breaking news, analysis and opinion on politics, business, world, national news, entertainment and more.",
+                        logo: "https://cdn.cnn.com/cnn/.e/img/3.0/global/misc/cnn-logo.png",
+                        url: "https://www.cnn.com/"
+                    },
+                    {
+                        title: "BBC News",
+                        description: "Breaking news, features, analysis and debate plus audio and video content from the UK and around the world.",
+                        logo: "https://m.files.bbci.co.uk/modules/bbc-morph-news-waf-page-meta/5.2.0/bbc_news_logo.png",
+                        url: "https://www.bbc.com/news"
+                    },
+                    {
+                        title: "Reuters",
+                        description: "Breaking international news and world news from Reuters. Coverage of business, economics, politics, sports, entertainment, technology and more.",
+                        logo: "https://www.reuters.com/pf/resources/images/reuters/logo-vertical-default.svg?d=108",
+                        url: "https://www.reuters.com/"
+                    },
+                    {
+                        title: "Al Jazeera",
+                        description: "News, analysis from the Middle East & worldwide, multimedia & interactives, opinions, documentaries, podcasts, long reads and broadcast schedule.",
+                        logo: "https://www.aljazeera.com/images/logo_aje_social.png",
+                        url: "https://www.aljazeera.com/"
+                    }
+                ]
+            },
+            {
+                id: "finance",
+                name: "Finance",
+                websites: [
+                    {
+                        title: "Bloomberg",
+                        description: "Bloomberg delivers business and markets news, data, analysis, and video worldwide, featuring stories from Businessweek and Bloomberg News.",
+                        logo: "https://assets.bbhub.io/media/sites/2/2021/02/logo-bloomberg-black.svg",
+                        url: "https://www.bloomberg.com/"
+                    },
+                    {
+                        title: "Yahoo Finance",
+                        description: "The latest financial news, reports and investment opportunities. Get stock market quotes, personal finance advice, company news and more.",
+                        logo: "https://s.yimg.com/rz/p/yahoo_finance_en-US_h_p_finance_2.png",
+                        url: "https://finance.yahoo.com/"
+                    },
+                    {
+                        title: "Investopedia",
+                        description: "Comprehensive financial education website offering dictionary, encyclopedia, tutorials, and analysis on investing, trading, and finance.",
+                        logo: "https://www.investopedia.com/thmb/QfBehpNM1l9DqmIFITrEBzEWYCM=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/investopedia-logo-165ba1c19a3f4766a8d6bd8f9253b6d7.png",
+                        url: "https://www.investopedia.com/"
+                    },
+                    {
+                        title: "Financial Times",
+                        description: "World business, finance, and political news from the Financial Times, with insightful analysis and commentary on global trends.",
+                        logo: "https://www.ft.com/__origami/service/image/v2/images/raw/ftlogo-v1:brand-ft-logo-square-coloured?source=origami-build-service&width=180&height=180&format=png&dpr=2",
+                        url: "https://www.ft.com/"
+                    }
+                ]
+            },
+            {
+                id: "technology",
+                name: "Technology",
+                websites: [
+                    {
+                        title: "TechCrunch",
+                        description: "Reporting on the business of technology, startups, venture capital funding, and Silicon Valley.",
+                        logo: "https://techcrunch.com/wp-content/uploads/2015/02/cropped-cropped-favicon-gradient.png?w=180",
+                        url: "https://techcrunch.com/"
+                    },
+                    {
+                        title: "Wired",
+                        description: "In-depth coverage of current and future trends in technology, science, business, digital culture, and politics.",
+                        logo: "https://www.wired.com/assets/logo-header.svg",
+                        url: "https://www.wired.com/"
+                    },
+                    {
+                        title: "The Verge",
+                        description: "Covering the intersection of technology, science, art, and culture with reviews, features, and breaking news.",
+                        logo: "https://cdn.vox-cdn.com/uploads/chorus_asset/file/24415978/The_Verge_Logo_Primary_RGB_Green.0.png",
+                        url: "https://www.theverge.com/"
+                    },
+                    {
+                        title: "CNET",
+                        description: "Product reviews, how-tos, deals and the latest tech news for people interested in computers, home entertainment, and technology.",
+                        logo: "https://www.cnet.com/a/img/resize/08212d31a8b8f84f973ebd4a0d57077ff50f69b8/hub/2021/10/19/e6b7f159-f75e-4e49-a9df-b0a0587fb1a6/cnet-logo-2021-update.png?auto=webp&width=1200",
+                        url: "https://www.cnet.com/"
+                    }
+                ]
+            },
+            {
+                id: "entertainment",
+                name: "Entertainment",
+                websites: [
+                    {
+                        title: "IMDb",
+                        description: "The world's most popular and authoritative source for movie, TV and celebrity content, featuring ratings, reviews, and information.",
+                        logo: "https://m.media-amazon.com/images/G/01/imdb/images/social/imdb_logo._CB410901634_.png",
+                        url: "https://www.imdb.com/"
+                    },
+                    {
+                        title: "Rotten Tomatoes",
+                        description: "Movie and TV reviews from critics and fans, with ratings that indicate the percentage of critics who have given the film a positive review.",
+                        logo: "https://www.rottentomatoes.com/assets/pizza-pie/images/rtlogo.9b892cff3fd.png",
+                        url: "https://www.rottentomatoes.com/"
+                    },
+                    {
+                        title: "Spotify",
+                        description: "Digital music service that gives you access to millions of songs, podcasts and videos from artists all over the world.",
+                        logo: "https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png",
+                        url: "https://www.spotify.com/"
+                    },
+                    {
+                        title: "Netflix",
+                        description: "Streaming service that offers a wide variety of award-winning TV shows, movies, anime, documentaries, and more.",
+                        logo: "https://assets.nflxext.com/us/ffe/siteui/common/icons/nfLogo.png",
+                        url: "https://www.netflix.com/"
+                    }
+                ]
+            },
+            {
+                id: "education",
+                name: "Education",
+                websites: [
+                    {
+                        title: "Khan Academy",
+                        description: "Free online courses, lessons and practice in math, science, and more for students, teachers, and learners of all ages.",
+                        logo: "https://cdn.kastatic.org/images/khan-logo-vertical-transparent.png",
+                        url: "https://www.khanacademy.org/"
+                    },
+                    {
+                        title: "Coursera",
+                        description: "Online learning platform offering courses, specializations, and degrees from top universities and companies worldwide.",
+                        logo: "https://d3njjcbhbojbot.cloudfront.net/web/images/icons/Coursera_logo_blue_45.svg",
+                        url: "https://www.coursera.org/"
+                    },
+                    {
+                        title: "edX",
+                        description: "Access to education from over 160 global institutions, with courses in computer science, languages, engineering, psychology, and more.",
+                        logo: "https://www.edx.org/images/logos/edx-logo-elm.svg",
+                        url: "https://www.edx.org/"
+                    },
+                    {
+                        title: "MIT OpenCourseWare",
+                        description: "Free publication of MIT course materials that reflects almost all the undergraduate and graduate subjects taught at MIT.",
+                        logo: "https://ocw.mit.edu/images/ocw_mast.png",
+                        url: "https://ocw.mit.edu/"
+                    }
+                ]
+            }
+        ];
+
+        // DOM elements
+        const categoryTabsContainer = document.getElementById('category-tabs');
+        const categoriesContainer = document.getElementById('categories-container');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+
+        // Generate category tabs
+        function generateCategoryTabs() {
+            websiteCategories.forEach((category, index) => {
+                const tab = document.createElement('button');
+                tab.className = 'category-tab';
+                tab.textContent = category.name;
+                tab.dataset.categoryId = category.id;
+                
+                if (index === 0) {
+                    tab.classList.add('active');
+                }
+                
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding category content
+                    showCategoryContent(category.id);
+                });
+                
+                categoryTabsContainer.appendChild(tab);
+            });
+        }
+
+        // Generate website cards for a category
+        function generateWebsiteCards(websites) {
+            const websitesGrid = document.createElement('div');
+            websitesGrid.className = 'websites-grid';
+            
+            websites.forEach(website => {
+                const card = document.createElement('div');
+                card.className = 'website-card';
+                
+                card.innerHTML = `
+                    <div class="website-logo">
+                        <img src="${website.logo}" alt="${website.title} Logo">
+                    </div>
+                    <div class="website-info">
+                        <h3 class="website-title">${website.title}</h3>
+                        <p class="website-description">${website.description}</p>
+                        <a href="${website.url}" class="website-link" target="_blank">Visit Website</a>
+                    </div>
+                `;
+                
+                websitesGrid.appendChild(card);
+            });
+            
+            return websitesGrid;
+        }
+
+        // Generate all category content
+        function generateCategoryContent() {
+            websiteCategories.forEach((category, index) => {
+                const categoryContent = document.createElement('div');
+                categoryContent.className = 'category-content';
+                categoryContent.id = `category-${category.id}`;
+                
+                if (index === 0) {
+                    categoryContent.classList.add('active');
+                }
+                
+                const heading = document.createElement('h2');
+                heading.textContent = `${category.name} Websites`;
+                heading.style.marginBottom = '20px';
+                
+                categoryContent.appendChild(heading);
+                categoryContent.appendChild(generateWebsiteCards(category.websites));
+                
+                categoriesContainer.appendChild(categoryContent);
+            });
+        }
+
+        // Show specific category content
+        function showCategoryContent(categoryId) {
+            // Hide all category content
+            document.querySelectorAll('.category-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected category content
+            const selectedContent = document.getElementById(`category-${categoryId}`);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+        }
+
+        // Search functionality
+        function performSearch(query) {
+            query = query.toLowerCase().trim();
+            
+            if (!query) {
+                // If search is empty, show the active category
+                const activeTab = document.querySelector('.category-tab.active');
+                if (activeTab) {
+                    showCategoryContent(activeTab.dataset.categoryId);
+                }
+                return;
+            }
+            
+            // Hide all category content
+            document.querySelectorAll('.category-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Create search results container if it doesn't exist
+            let searchResults = document.getElementById('search-results');
+            if (!searchResults) {
+                searchResults = document.createElement('div');
+                searchResults.className = 'category-content';
+                searchResults.id = 'search-results';
+                categoriesContainer.appendChild(searchResults);
+            }
+            
+            // Clear previous search results
+            searchResults.innerHTML = '';
+            
+            // Find matching websites
+            const matchingWebsites = [];
+            
+            websiteCategories.forEach(category => {
+                category.websites.forEach(website => {
+                    if (
+                        website.title.toLowerCase().includes(query) ||
+                        website.description.toLowerCase().includes(query) ||
+                        category.name.toLowerCase().includes(query)
+                    ) {
+                        matchingWebsites.push({
+                            ...website,
+                            category: category.name
+                        });
+                    }
+                });
+            });
+            
+            // Display search results
+            const heading = document.createElement('h2');
+            heading.textContent = `Search Results for "${query}"`;
+            heading.style.marginBottom = '20px';
+            searchResults.appendChild(heading);
+            
+            if (matchingWebsites.length > 0) {
+                const websitesGrid = document.createElement('div');
+                websitesGrid.className = 'websites-grid';
+                
+                matchingWebsites.forEach(website => {
+                    const card = document.createElement('div');
+                    card.className = 'website-card';
+                    
+                    card.innerHTML = `
+                        <div class="website-logo">
+                            <img src="${website.logo}" alt="${website.title} Logo">
+                        </div>
+                        <div class="website-info">
+                            <h3 class="website-title">${website.title}</h3>
+                            <p class="website-category" style="color: #3498db; margin-bottom: 5px;">Category: ${website.category}</p>
+                            <p class="website-description">${website.description}</p>
+                            <a href="${website.url}" class="website-link" target="_blank">Visit Website</a>
+                        </div>
+                    `;
+                    
+                    websitesGrid.appendChild(card);
+                });
+                
+                searchResults.appendChild(websitesGrid);
+            } else {
+                const noResults = document.createElement('div');
+                noResults.className = 'no-results';
+                noResults.textContent = 'No websites found matching your search.';
+                searchResults.appendChild(noResults);
+            }
+            
+            // Show search results
+            searchResults.classList.add('active');
+        }
+
+        // Initialize the page
+        function init() {
+            generateCategoryTabs();
+            generateCategoryContent();
+            
+            // Add search event listeners
+            searchButton.addEventListener('click', () => {
+                performSearch(searchInput.value);
+            });
+            
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch(searchInput.value);
+                }
+            });
+        }
+
+        // Run initialization when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
