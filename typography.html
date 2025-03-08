@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typography Picker</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3f7;
+            --text-color: #333;
+            --light-color: #f5f5f5;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--light-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+        }
+
+        .preview {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .font-info {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .copy-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .copy-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .preview-content h2 {
+            margin-bottom: 15px;
+        }
+
+        .preview-content p {
+            margin-bottom: 15px;
+        }
+
+        .preview-content .sizes {
+            margin-top: 30px;
+        }
+
+        .size-example {
+            margin-bottom: 15px;
+        }
+
+        .font-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .font-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .font-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .font-card h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .font-card p {
+            color: var(--text-color);
+        }
+
+        .font-card .sample {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .font-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Typography Picker</h1>
+            <p class="subtitle">Explore and preview beautiful web fonts</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="category">Category</label>
+                <select id="category">
+                    <option value="">All Categories</option>
+                    <option value="serif">Serif</option>
+                    <option value="sans-serif">Sans Serif</option>
+                    <option value="display">Display</option>
+                    <option value="handwriting">Handwriting</option>
+                    <option value="monospace">Monospace</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="sort">Sort By</label>
+                <select id="sort">
+                    <option value="popularity">Popularity</option>
+                    <option value="alpha">Alphabetical</option>
+                    <option value="date">Newest</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" placeholder="Search fonts...">
+            </div>
+            <div class="control-group">
+                <label for="text-sample">Sample Text</label>
+                <input type="text" id="text-sample" value="The quick brown fox jumps over the lazy dog">
+            </div>
+        </div>
+
+        <div class="preview" id="font-preview" style="display: none;">
+            <div class="preview-header">
+                <div class="font-info">
+                    <span id="preview-font-name">Font Name</span>
+                    <span id="preview-font-category"></span>
+                </div>
+                <button class="copy-button" id="copy-css">Copy CSS</button>
+            </div>
+            <div class="preview-content">
+                <h2>Heading Example</h2>
+                <p>This is a paragraph that demonstrates how this font looks in a body of text. Good typography makes the reading experience more enjoyable and helps convey your message effectively.</p>
+                <div class="sizes">
+                    <div class="size-example" style="font-size: 12px;">Font size: 12px</div>
+                    <div class="size-example" style="font-size: 16px;">Font size: 16px</div>
+                    <div class="size-example" style="font-size: 24px;">Font size: 24px</div>
+                    <div class="size-example" style="font-size: 32px;">Font size: 32px</div>
+                    <div class="size-example" style="font-size: 48px;">Font size: 48px</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading fonts...</div>
+        <div id="font-list" class="font-list"></div>
+
+        <div class="notification" id="notification">CSS copied to clipboard!</div>
+
+        <footer>
+            <p>Created with ❤️ using Google Fonts API</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const categorySelect = document.getElementById('category');
+        const sortSelect = document.getElementById('sort');
+        const searchInput = document.getElementById('search');
+        const textSampleInput = document.getElementById('text-sample');
+        const fontListContainer = document.getElementById('font-list');
+        const loadingElement = document.getElementById('loading');
+        const fontPreview = document.getElementById('font-preview');
+        const previewFontName = document.getElementById('preview-font-name');
+        const previewFontCategory = document.getElementById('preview-font-category');
+        const copyCssButton = document.getElementById('copy-css');
+        const notification = document.getElementById('notification');
+
+        // State
+        let fonts = [];
+        let filteredFonts = [];
+        let currentFont = null;
+        let loadedFonts = new Set();
+
+        // Popular Google Fonts with their categories
+        // This is a predefined list since we're not using the API key
+        const popularFonts = [
+            { family: "Roboto", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Open Sans", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Lato", category: "sans-serif", variants: ["regular", "700", "900"] },
+            { family: "Montserrat", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Roboto Condensed", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Source Sans Pro", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Oswald", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Raleway", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Roboto Mono", category: "monospace", variants: ["regular", "500", "700"] },
+            { family: "Poppins", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Noto Sans", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Ubuntu", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Roboto Slab", category: "serif", variants: ["regular", "700"] },
+            { family: "Merriweather", category: "serif", variants: ["regular", "700", "900"] },
+            { family: "Playfair Display", category: "serif", variants: ["regular", "700", "900"] },
+            { family: "PT Sans", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Lora", category: "serif", variants: ["regular", "700"] },
+            { family: "Nunito", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Work Sans", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Fira Sans", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Noto Serif", category: "serif", variants: ["regular", "700"] },
+            { family: "PT Serif", category: "serif", variants: ["regular", "700"] },
+            { family: "Quicksand", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Inconsolata", category: "monospace", variants: ["regular", "700"] },
+            { family: "Titillium Web", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Rubik", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Nunito Sans", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Mukta", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Cabin", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Arimo", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Noto Sans JP", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Hind Siliguri", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Oxygen", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Bitter", category: "serif", variants: ["regular", "700"] },
+            { family: "Libre Franklin", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "IBM Plex Sans", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Karla", category: "sans-serif", variants: ["regular", "700"] },
+            { family: "Josefin Sans", category: "sans-serif", variants: ["regular", "600", "700"] },
+            { family: "Libre Baskerville", category: "serif", variants: ["regular", "700"] },
+            { family: "Source Code Pro", category: "monospace", variants: ["regular", "500", "700"] },
+            { family: "Dancing Script", category: "handwriting", variants: ["regular", "700"] },
+            { family: "Pacifico", category: "handwriting", variants: ["regular"] },
+            { family: "Caveat", category: "handwriting", variants: ["regular", "700"] },
+            { family: "Shadows Into Light", category: "handwriting", variants: ["regular"] },
+            { family: "Permanent Marker", category: "handwriting", variants: ["regular"] },
+            { family: "Satisfy", category: "handwriting", variants: ["regular"] },
+            { family: "Lobster", category: "display", variants: ["regular"] },
+            { family: "Comfortaa", category: "display", variants: ["regular", "500", "700"] },
+            { family: "Righteous", category: "display", variants: ["regular"] },
+            { family: "Abril Fatface", category: "display", variants: ["regular"] },
+            { family: "Bangers", category: "display", variants: ["regular"] },
+            { family: "Russo One", category: "sans-serif", variants: ["regular"] },
+            { family: "Archivo Black", category: "sans-serif", variants: ["regular"] },
+            { family: "Bebas Neue", category: "display", variants: ["regular"] },
+            { family: "Teko", category: "sans-serif", variants: ["regular", "500", "700"] },
+            { family: "Anton", category: "sans-serif", variants: ["regular"] },
+            { family: "Fjalla One", category: "sans-serif", variants: ["regular"] },
+            { family: "Acme", category: "sans-serif", variants: ["regular"] },
+            { family: "Bree Serif", category: "serif", variants: ["regular"] },
+            { family: "Patua One", category: "display", variants: ["regular"] },
+            { family: "Secular One", category: "sans-serif", variants: ["regular"] }
+        ];
+
+        // Initialize
+        initializeFonts();
+
+        // Event Listeners
+        categorySelect.addEventListener('change', filterFonts);
+        sortSelect.addEventListener('change', filterFonts);
+        searchInput.addEventListener('input', filterFonts);
+        textSampleInput.addEventListener('input', updateSampleText);
+        copyCssButton.addEventListener('click', copyFontCss);
+
+        // Functions
+        function initializeFonts() {
+            fonts = popularFonts;
+            filteredFonts = [...fonts];
+            loadingElement.style.display = 'none';
+            renderFontList();
+        }
+
+        function filterFonts() {
+            const category = categorySelect.value;
+            const searchTerm = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
+
+            filteredFonts = fonts.filter(font => {
+                const matchesCategory = category ? font.category === category : true;
+                const matchesSearch = searchTerm ? 
+                    font.family.toLowerCase().includes(searchTerm) : true;
+                return matchesCategory && matchesSearch;
+            });
+
+            // Sort fonts
+            if (sortBy === 'alpha') {
+                filteredFonts.sort((a, b) => a.family.localeCompare(b.family));
+            } else if (sortBy === 'date') {
+                // For date, we'll just reverse the order as a simple simulation of newest
+                filteredFonts.sort((a, b) => fonts.indexOf(b) - fonts.indexOf(a));
+            } else {
+                // Default is popularity, which is already the order in our array
+                filteredFonts.sort((a, b) => fonts.indexOf(a) - fonts.indexOf(b));
+            }
+
+            renderFontList();
+        }
+
+        function renderFontList() {
+            fontListContainer.innerHTML = '';
+
+            if (filteredFonts.length === 0) {
+                fontListContainer.innerHTML = '<p class="loading">No fonts found matching your criteria.</p>';
+                return;
+            }
+
+            filteredFonts.forEach(font => {
+                const fontCard = document.createElement('div');
+                fontCard.className = 'font-card';
+                fontCard.innerHTML = `
+                    <h3>${font.family}</h3>
+                    <p>${font.category}</p>
+                    <div class="sample" style="font-family: '${font.family}', ${font.category};">
+                        ${textSampleInput.value || 'The quick brown fox jumps over the lazy dog'}
+                    </div>
+                `;
+                fontCard.addEventListener('click', () => selectFont(font));
+                fontListContainer.appendChild(fontCard);
+
+                // Load the font if not already loaded
+                if (!loadedFonts.has(font.family)) {
+                    loadFont(font);
+                    loadedFonts.add(font.family);
+                }
+            });
+        }
+
+        function loadFont(font) {
+            const fontFamily = font.family.replace(/ /g, '+');
+            const variants = font.variants.join(',');
+            const fontUrl = `https://fonts.googleapis.com/css2?family=${fontFamily}:wght@${variants}&display=swap`;
+            
+            const linkElement = document.createElement('link');
+            linkElement.rel = 'stylesheet';
+            linkElement.href = fontUrl;
+            document.head.appendChild(linkElement);
+        }
+
+        function selectFont(font) {
+            currentFont = font;
+            
+            // Update preview
+            fontPreview.style.display = 'block';
+            fontPreview.style.fontFamily = `'${font.family}', ${font.category}`;
+            previewFontName.textContent = font.family;
+            previewFontCategory.textContent = ` (${font.category})`;
+            
+            // Scroll to preview
+            fontPreview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateSampleText() {
+            const sampleText = textSampleInput.value || 'The quick brown fox jumps over the lazy dog';
+            document.querySelectorAll('.font-card .sample').forEach(sample => {
+                sample.textContent = sampleText;
+            });
+        }
+
+        function copyFontCss() {
+            if (!currentFont) return;
+            
+            const fontFamily = currentFont.family.replace(/ /g, '+');
+            const variants = currentFont.variants.join(',');
+            const cssText = `/* Font import */
+@import url('https://fonts.googleapis.com/css2?family=${fontFamily}:wght@${variants}&display=swap');
+
+/* CSS rules */
+body {
+  font-family: '${currentFont.family}', ${currentFont.category};
+}`;
+
+            navigator.clipboard.writeText(cssText)
+                .then(() => showNotification())
+                .catch(err => console.error('Failed to copy: ', err));
+        }
+
+        function showNotification() {
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
