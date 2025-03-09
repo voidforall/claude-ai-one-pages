@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Dinosaur Game Clone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f7f7f7;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 300px;
+            border-bottom: 2px solid #535353;
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 20px;
+            color: #535353;
+        }
+
+        #dino {
+            position: absolute;
+            bottom: 0;
+            left: 50px;
+            width: 40px;
+            height: 43px;
+            background-color: #535353;
+            border-radius: 4px 15px 0 0;
+        }
+
+        .cactus {
+            position: absolute;
+            bottom: 0;
+            width: 15px; /* Smaller width */
+            height: 30px; /* Smaller height */
+            background-color: #535353;
+        }
+
+        .cloud {
+            position: absolute;
+            width: 60px;
+            height: 20px;
+            background-color: #d3d3d3;
+            border-radius: 10px;
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #535353;
+        }
+
+        #restart-btn {
+            display: none;
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #535353;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .difficulty {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chrome Dinosaur Game (Easy Mode)</h1>
+    <p>Press Space or Up Arrow to jump</p>
+    <div class="game-container">
+        <div id="score">0</div>
+        <div id="dino"></div>
+        <div id="game-over">GAME OVER</div>
+        <button id="restart-btn">Restart</button>
+    </div>
+
+    <script>
+        const dino = document.getElementById('dino');
+        const gameContainer = document.querySelector('.game-container');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverText = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        let isJumping = false;
+        let isGameOver = false;
+        let score = 0;
+        let speed = 4; // Slower initial speed
+        let gameTimerId;
+        let cactiTimerId;
+        let cloudsTimerId;
+        let scoreTimerId;
+        
+        // Jump function
+        function jump() {
+            if (isJumping || isGameOver) return;
+            
+            isJumping = true;
+            let position = 0;
+            let jumpCount = 0;
+            
+            const jumpInterval = setInterval(() => {
+                // Jump up - higher jump
+                if (jumpCount < 20) {
+                    position += 6;
+                    dino.style.bottom = position + 'px';
+                }
+                // Fall down
+                else if (jumpCount < 40) {
+                    position -= 6;
+                    dino.style.bottom = position + 'px';
+                }
+                // End jump
+                else {
+                    clearInterval(jumpInterval);
+                    isJumping = false;
+                    dino.style.bottom = '0';
+                }
+                
+                jumpCount++;
+            }, 20);
+        }
+        
+        // Generate cactus obstacles
+        function generateCactus() {
+            if (isGameOver) return;
+            
+            const cactus = document.createElement('div');
+            cactus.classList.add('cactus');
+            gameContainer.appendChild(cactus);
+            
+            cactus.style.left = '800px';
+            
+            // Random cactus height - smaller range
+            const height = Math.floor(Math.random() * 15) + 20;
+            cactus.style.height = height + 'px';
+            
+            // Move cactus
+            const moveCactus = setInterval(() => {
+                if (isGameOver) {
+                    clearInterval(moveCactus);
+                    return;
+                }
+                
+                const cactusLeft = parseInt(cactus.style.left);
+                
+                // Check for collision - more forgiving hitbox
+                if (cactusLeft > 20 && cactusLeft < 70 && parseInt(dino.style.bottom || '0') < (height - 10)) {
+                    gameOver();
+                    clearInterval(moveCactus);
+                    return;
+                }
+                
+                // Remove cactus when it goes off screen
+                if (cactusLeft <= -20) {
+                    clearInterval(moveCactus);
+                    gameContainer.removeChild(cactus);
+                } else {
+                    cactus.style.left = (cactusLeft - speed) + 'px';
+                }
+            }, 20);
+            
+            // Generate next cactus after random time - longer intervals
+            const randomTime = Math.floor(Math.random() * 2500) + 1500;
+            cactiTimerId = setTimeout(generateCactus, randomTime);
+        }
+        
+        // Generate clouds
+        function generateCloud() {
+            if (isGameOver) return;
+            
+            const cloud = document.createElement('div');
+            cloud.classList.add('cloud');
+            gameContainer.appendChild(cloud);
+            
+            // Random cloud position
+            const top = Math.floor(Math.random() * 100) + 50;
+            cloud.style.top = top + 'px';
+            cloud.style.left = '800px';
+            
+            // Move cloud
+            const moveCloud = setInterval(() => {
+                if (isGameOver) {
+                    clearInterval(moveCloud);
+                    return;
+                }
+                
+                const cloudLeft = parseInt(cloud.style.left);
+                
+                // Remove cloud when it goes off screen
+                if (cloudLeft <= -60) {
+                    clearInterval(moveCloud);
+                    gameContainer.removeChild(cloud);
+                } else {
+                    cloud.style.left = (cloudLeft - 2) + 'px';
+                }
+            }, 20);
+            
+            // Generate next cloud after random time
+            const randomTime = Math.floor(Math.random() * 3000) + 2000;
+            cloudsTimerId = setTimeout(generateCloud, randomTime);
+        }
+        
+        // Update score
+        function updateScore() {
+            if (isGameOver) return;
+            
+            score++;
+            scoreDisplay.textContent = score;
+            
+            // Increase speed every 200 points (slower progression)
+            if (score % 200 === 0) {
+                speed += 0.3;
+            }
+            
+            scoreTimerId = setTimeout(updateScore, 100);
+        }
+        
+        // Game over function
+        function gameOver() {
+            isGameOver = true;
+            gameOverText.style.display = 'block';
+            restartBtn.style.display = 'block';
+            
+            // Clear all timers
+            clearTimeout(cactiTimerId);
+            clearTimeout(cloudsTimerId);
+            clearTimeout(scoreTimerId);
+        }
+        
+        // Restart game
+        function restartGame() {
+            // Reset game state
+            isGameOver = false;
+            score = 0;
+            speed = 4; // Reset to slower speed
+            scoreDisplay.textContent = '0';
+            gameOverText.style.display = 'none';
+            restartBtn.style.display = 'none';
+            
+            // Remove all cacti and clouds
+            document.querySelectorAll('.cactus, .cloud').forEach(element => {
+                element.remove();
+            });
+            
+            // Start game again
+            startGame();
+        }
+        
+        // Start game
+        function startGame() {
+            generateCactus();
+            generateCloud();
+            updateScore();
+        }
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if ((e.code === 'Space' || e.code === 'ArrowUp') && !isGameOver) {
+                jump();
+            }
+        });
+        
+        // Touch support for mobile
+        document.addEventListener('touchstart', () => {
+            if (!isGameOver) {
+                jump();
+            }
+        });
+        
+        restartBtn.addEventListener('click', restartGame);
+        
+        // Start the game
+        startGame();
+    </script>
+</body>
+</html>
