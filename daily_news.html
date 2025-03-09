@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Daily Chronicle</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Newspaper container */
+        .newspaper {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        /* Header styles */
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .newspaper-name {
+            font-family: 'Old English Text MT', 'Times New Roman', serif;
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        
+        .date-line {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        
+        .motto {
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            border-top: 1px solid #999;
+            border-bottom: 1px solid #999;
+            padding: 5px 0;
+        }
+        
+        /* Main content */
+        .content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        /* Main story */
+        .main-story {
+            grid-column: 1;
+            border-right: 1px solid #ddd;
+            padding-right: 20px;
+        }
+        
+        .main-headline {
+            font-size: 2.5rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 15px;
+        }
+        
+        .main-image {
+            width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        
+        .main-summary {
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+        
+        .main-content {
+            column-count: 2;
+            column-gap: 20px;
+            text-align: justify;
+            font-size: 1rem;
+        }
+        
+        /* Secondary stories */
+        .secondary-stories {
+            grid-column: 2;
+        }
+        
+        .story {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .story:last-child {
+            border-bottom: none;
+        }
+        
+        .story-headline {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        .story-image {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        
+        .story-summary {
+            font-size: 0.9rem;
+            text-align: justify;
+        }
+        
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5rem;
+            font-style: italic;
+        }
+        
+        /* Error state */
+        .error {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5rem;
+            color: #d9534f;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #000;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-story {
+                border-right: none;
+                padding-right: 0;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .main-content {
+                column-count: 1;
+            }
+            
+            .newspaper-name {
+                font-size: 3rem;
+            }
+            
+            .main-headline {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="newspaper">
+        <header class="header">
+            <h1 class="newspaper-name">The Daily Chronicle</h1>
+            <div class="date-line" id="current-date">Loading date...</div>
+            <div class="motto">"All the News That's Fit to Print"</div>
+        </header>
+        
+        <div id="news-container">
+            <div class="loading">Loading today's headlines...</div>
+        </div>
+        
+        <footer class="footer">
+            <p>The Daily Chronicle &copy; <span id="current-year"></span> | All Rights Reserved</p>
+            <p>News powered by <span id="api-source">open news APIs</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // Set current date in newspaper format
+        function formatDate(date) {
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+        
+        const today = new Date();
+        document.getElementById('current-date').textContent = formatDate(today);
+        document.getElementById('current-year').textContent = today.getFullYear();
+        
+        // Display news in newspaper format
+        function displayNews(articles, source) {
+            if (!articles || articles.length === 0) {
+                showError("No news articles found. Please try again later.");
+                return;
+            }
+            
+            // Update the API source in the footer
+            document.getElementById('api-source').textContent = source;
+            
+            const newsContainer = document.getElementById('news-container');
+            
+            // Create content structure
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'content';
+            
+            // Main story (first article)
+            const mainStory = document.createElement('div');
+            mainStory.className = 'main-story';
+            
+            const mainArticle = articles[0];
+            
+            // Determine image URL based on API response structure
+            const imageUrl = mainArticle.image_url || mainArticle.urlToImage || mainArticle.image || 
+                            (mainArticle.multimedia && mainArticle.multimedia.length > 0 ? mainArticle.multimedia[0].url : null) ||
+                            'https://images.unsplash.com/photo-1504711434969-e33886168f5c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+            
+            // Determine article URL
+            const articleUrl = mainArticle.url || mainArticle.link || mainArticle.web_url || '#';
+            
+            // Determine source name
+            const sourceName = mainArticle.source || 
+                              (mainArticle.source_id ? mainArticle.source_id : 
+                              (mainArticle.source && mainArticle.source.name ? mainArticle.source.name : 
+                              extractSourceName(articleUrl)));
+            
+            // Determine content or description
+            const articleContent = mainArticle.content || mainArticle.description || mainArticle.snippet || mainArticle.abstract || '';
+            
+            mainStory.innerHTML = `
+                <h2 class="main-headline">${mainArticle.title}</h2>
+                <img class="main-image" src="${imageUrl}" alt="${mainArticle.title}" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'">
+                <p class="main-summary">${mainArticle.description || mainArticle.snippet || mainArticle.abstract || ''}</p>
+                <div class="main-content">
+                    <p>${articleContent}</p>
+                    <p>Continue reading at <a href="${articleUrl}" target="_blank">${sourceName}</a></p>
+                </div>
+            `;
+            
+            // Secondary stories
+            const secondaryStories = document.createElement('div');
+            secondaryStories.className = 'secondary-stories';
+            
+            // Add remaining articles as secondary stories
+            for (let i = 1; i < Math.min(articles.length, 5); i++) {
+                const article = articles[i];
+                const storyDiv = document.createElement('div');
+                storyDiv.className = 'story';
+                
+                // Determine image URL for this article
+                const storyImageUrl = article.image_url || article.urlToImage || article.image || 
+                                     (article.multimedia && article.multimedia.length > 0 ? article.multimedia[0].url : null) ||
+                                     'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80';
+                
+                // Determine article URL
+                const storyUrl = article.url || article.link || article.web_url || '#';
+                
+                storyDiv.innerHTML = `
+                    <h3 class="story-headline">${article.title}</h3>
+                    <img class="story-image" src="${storyImageUrl}" alt="${article.title}" onerror="this.src='https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'">
+                    <p class="story-summary">${article.description || article.snippet || article.abstract || ''}</p>
+                    <p><a href="${storyUrl}" target="_blank">Read more</a></p>
+                `;
+                
+                secondaryStories.appendChild(storyDiv);
+            }
+            
+            contentDiv.appendChild(mainStory);
+            contentDiv.appendChild(secondaryStories);
+            
+            // Replace loading message with content
+            newsContainer.innerHTML = '';
+            newsContainer.appendChild(contentDiv);
+        }
+        
+        // Show error message
+        function showError(message) {
+            const newsContainer = document.getElementById('news-container');
+            newsContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        // Helper function to extract source name from URL
+        function extractSourceName(url) {
+            if (!url || url === '#') return 'News Source';
+            
+            try {
+                const urlObj = new URL(url);
+                let hostname = urlObj.hostname;
+                
+                // Remove www. if present
+                hostname = hostname.replace('www.', '');
+                
+                // Extract domain name without TLD
+                const parts = hostname.split('.');
+                if (parts.length >= 2) {
+                    return parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1);
+                }
+                
+                return hostname;
+            } catch (e) {
+                return 'News Source';
+            }
+        }
+        
+        // Try multiple news APIs until one works
+        async function fetchNews() {
+            // Array of API endpoints to try
+            const apiEndpoints = [
+                {
+                    url: 'https://api.nytimes.com/svc/topstories/v2/home.json?api-key=yourkey',
+                    name: 'New York Times API',
+                    transform: (data) => {
+                        return data.results.map(article => ({
+                            title: article.title,
+                            description: article.abstract,
+                            url: article.url,
+                            image_url: article.multimedia && article.multimedia.length > 0 ? article.multimedia[0].url : null,
+                            source: 'New York Times'
+                        }));
+                    }
+                },
+                {
+                    url: 'https://newsapi.org/v2/top-headlines?country=us&apiKey=yourkey',
+                    name: 'News API',
+                    transform: (data) => {
+                        return data.articles;
+                    }
+                },
+                {
+                    url: 'https://content.guardianapis.com/search?show-fields=thumbnail,trailText&api-key=test',
+                    name: 'The Guardian API',
+                    transform: (data) => {
+                        return data.response.results.map(article => ({
+                            title: article.webTitle,
+                            description: article.fields?.trailText || '',
+                            url: article.webUrl,
+                            image_url: article.fields?.thumbnail || null,
+                            source: 'The Guardian'
+                        }));
+                    }
+                },
+                {
+                    url: 'https://api.spaceflightnewsapi.net/v3/articles',
+                    name: 'Spaceflight News API',
+                    transform: (data) => {
+                        return data.map(article => ({
+                            title: article.title,
+                            description: article.summary,
+                            url: article.url,
+                            image_url: article.imageUrl,
+                            source: article.newsSite
+                        }));
+                    }
+                },
+                {
+                    url: 'https://hacker-news.firebaseio.com/v0/topstories.json',
+                    name: 'Hacker News API',
+                    transform: async (data) => {
+                        // Hacker News requires fetching each story individually
+                        const storyPromises = data.slice(0, 10).map(id => 
+                            fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
+                                .then(res => res.json())
+                        );
+                        
+                        const stories = await Promise.all(storyPromises);
+                        return stories.map(story => ({
+                            title: story.title,
+                            description: `Points: ${story.score} | Comments: ${story.descendants}`,
+                            url: story.url || `https://news.ycombinator.com/item?id=${story.id}`,
+                            image_url: null,
+                            source: 'Hacker News'
+                        }));
+                    }
+                }
+            ];
+            
+            // Try each API in sequence until one works
+            for (const api of apiEndpoints) {
+                try {
+                    console.log(`Trying ${api.name}...`);
+                    const response = await fetch(api.url);
+                    
+                    if (!response.ok) {
+                        console.log(`${api.name} returned status ${response.status}`);
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    let articles;
+                    
+                    if (typeof api.transform === 'function') {
+                        articles = await api.transform(data);
+                    } else {
+                        articles = data;
+                    }
+                    
+                    if (articles && articles.length > 0) {
+                        console.log(`Successfully fetched news from ${api.name}`);
+                        displayNews(articles, api.name);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error(`Error with ${api.name}:`, error);
+                }
+            }
+            
+            // If we get here, all APIs failed
+            showError("Unable to fetch news from any source. Please try again later.");
+            return false;
+        }
+        
+        // Initialize the page
+        fetchNews();
+    </script>
+</body>
+</html>
