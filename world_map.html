@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive World Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .map-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        #world-map {
+            width: 100%;
+            height: 600px;
+        }
+        .country {
+            fill: #c0c0c0;
+            stroke: #ffffff;
+            stroke-width: 0.5;
+            transition: fill 0.3s;
+        }
+        .country:hover {
+            fill: #66c2a5;
+            cursor: pointer;
+        }
+        .selected {
+            fill: #3288bd !important;
+        }
+        .info-panel {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive World Map</h1>
+        
+        <div class="controls">
+            <button id="zoom-in">Zoom In</button>
+            <button id="zoom-out">Zoom Out</button>
+            <button id="reset">Reset View</button>
+        </div>
+        
+        <div class="map-container">
+            <svg id="world-map" viewBox="0 0 1000 500"></svg>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>Country Information</h2>
+            <div id="country-info">
+                <p>Click on a country to see information about it.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main variables
+        const svg = document.getElementById('world-map');
+        const tooltip = document.getElementById('tooltip');
+        const countryInfo = document.getElementById('country-info');
+        let selectedCountry = null;
+        
+        // SVG manipulation variables
+        let viewBox = { x: 0, y: 0, width: 1000, height: 500 };
+        const svgWidth = 1000;
+        const svgHeight = 500;
+        
+        // Country data (simplified for this example)
+        const countryData = {
+            "USA": {
+                name: "United States",
+                capital: "Washington D.C.",
+                population: "331 million",
+                area: "9.8 million km²",
+                language: "English"
+            },
+            "CAN": {
+                name: "Canada",
+                capital: "Ottawa",
+                population: "38 million",
+                area: "9.98 million km²",
+                language: "English, French"
+            },
+            "MEX": {
+                name: "Mexico",
+                capital: "Mexico City",
+                population: "126 million",
+                area: "1.96 million km²",
+                language: "Spanish"
+            },
+            "BRA": {
+                name: "Brazil",
+                capital: "Brasília",
+                population: "213 million",
+                area: "8.5 million km²",
+                language: "Portuguese"
+            },
+            "GBR": {
+                name: "United Kingdom",
+                capital: "London",
+                population: "68 million",
+                area: "242,495 km²",
+                language: "English"
+            },
+            "FRA": {
+                name: "France",
+                capital: "Paris",
+                population: "67 million",
+                area: "551,695 km²",
+                language: "French"
+            },
+            "DEU": {
+                name: "Germany",
+                capital: "Berlin",
+                population: "83 million",
+                area: "357,022 km²",
+                language: "German"
+            },
+            "RUS": {
+                name: "Russia",
+                capital: "Moscow",
+                population: "144 million",
+                area: "17.1 million km²",
+                language: "Russian"
+            },
+            "CHN": {
+                name: "China",
+                capital: "Beijing",
+                population: "1.4 billion",
+                area: "9.6 million km²",
+                language: "Mandarin"
+            },
+            "IND": {
+                name: "India",
+                capital: "New Delhi",
+                population: "1.38 billion",
+                area: "3.3 million km²",
+                language: "Hindi, English"
+            },
+            "JPN": {
+                name: "Japan",
+                capital: "Tokyo",
+                population: "126 million",
+                area: "377,975 km²",
+                language: "Japanese"
+            },
+            "AUS": {
+                name: "Australia",
+                capital: "Canberra",
+                population: "25.7 million",
+                area: "7.7 million km²",
+                language: "English"
+            }
+        };
+
+        // Fetch the world map data
+        fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+            .then(response => response.json())
+            .then(data => {
+                createMap(data);
+            })
+            .catch(error => {
+                console.error('Error loading the map data:', error);
+                // Fallback to a simple placeholder if the data can't be loaded
+                svg.innerHTML = `
+                    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="20">
+                        Unable to load map data. Please check your internet connection.
+                    </text>
+                `;
+            });
+
+        function createMap(geoData) {
+            // Simple map projection (Mercator-like)
+            function projectPoint(lon, lat) {
+                const x = (lon + 180) * (svgWidth / 360);
+                const y = (90 - lat) * (svgHeight / 180);
+                return [x, y];
+            }
+
+            // Create path elements for each country
+            geoData.features.forEach(feature => {
+                const countryPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                
+                // Generate the SVG path data
+                let pathData = '';
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates.forEach(ring => {
+                        let ringPath = '';
+                        ring.forEach((coord, i) => {
+                            const [x, y] = projectPoint(coord[0], coord[1]);
+                            ringPath += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                        });
+                        pathData += ringPath + 'Z';
+                    });
+                } else if (feature.geometry.type === 'MultiPolygon') {
+                    feature.geometry.coordinates.forEach(polygon => {
+                        polygon.forEach(ring => {
+                            let ringPath = '';
+                            ring.forEach((coord, i) => {
+                                const [x, y] = projectPoint(coord[0], coord[1]);
+                                ringPath += (i === 0 ? 'M' : 'L') + x + ',' + y;
+                            });
+                            pathData += ringPath + 'Z';
+                        });
+                    });
+                }
+                
+                countryPath.setAttribute('d', pathData);
+                countryPath.setAttribute('class', 'country');
+                countryPath.setAttribute('data-name', feature.properties.name);
+                countryPath.setAttribute('data-id', feature.id);
+                
+                // Add event listeners
+                countryPath.addEventListener('mousemove', showTooltip);
+                countryPath.addEventListener('mouseout', hideTooltip);
+                countryPath.addEventListener('click', selectCountry);
+                
+                svg.appendChild(countryPath);
+            });
+        }
+
+        // Event handlers
+        function showTooltip(event) {
+            const country = event.target.getAttribute('data-name');
+            tooltip.textContent = country;
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY + 10) + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.style.opacity = 0;
+        }
+
+        function selectCountry(event) {
+            // Remove previous selection
+            if (selectedCountry) {
+                selectedCountry.classList.remove('selected');
+            }
+            
+            // Set new selection
+            selectedCountry = event.target;
+            selectedCountry.classList.add('selected');
+            
+            // Get country data
+            const countryId = selectedCountry.getAttribute('data-id');
+            const countryName = selectedCountry.getAttribute('data-name');
+            
+            // Display country information
+            const data = countryData[countryId] || {
+                name: countryName,
+                capital: "Unknown",
+                population: "Unknown",
+                area: "Unknown",
+                language: "Unknown"
+            };
+            
+            countryInfo.innerHTML = `
+                <h3>${data.name}</h3>
+                <p><strong>Capital:</strong> ${data.capital}</p>
+                <p><strong>Population:</strong> ${data.population}</p>
+                <p><strong>Area:</strong> ${data.area}</p>
+                <p><strong>Official Language(s):</strong> ${data.language}</p>
+            `;
+        }
+
+        // Zoom and pan functionality
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            zoom(0.8);
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            zoom(1.25);
+        });
+
+        document.getElementById('reset').addEventListener('click', () => {
+            viewBox = { x: 0, y: 0, width: 1000, height: 500 };
+            updateViewBox();
+        });
+
+        function zoom(factor) {
+            const newWidth = viewBox.width * factor;
+            const newHeight = viewBox.height * factor;
+            
+            // Adjust the viewBox to zoom around the center
+            viewBox.x += (viewBox.width - newWidth) / 2;
+            viewBox.y += (viewBox.height - newHeight) / 2;
+            viewBox.width = newWidth;
+            viewBox.height = newHeight;
+            
+            updateViewBox();
+        }
+
+        function updateViewBox() {
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        }
+
+        // Pan functionality with mouse drag
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+
+        svg.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            dragStart = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            svg.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            if (!isDragging) return;
+            
+            const dx = (event.clientX - dragStart.x) * (viewBox.width / svg.clientWidth);
+            const dy = (event.clientY - dragStart.y) * (viewBox.height / svg.clientHeight);
+            
+            viewBox.x -= dx;
+            viewBox.y -= dy;
+            
+            updateViewBox();
+            
+            dragStart = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            svg.style.cursor = 'default';
+        });
+
+        // Add touch support for mobile devices
+        svg.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                dragStart = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+                event.preventDefault();
+            }
+        });
+
+        window.addEventListener('touchmove', (event) => {
+            if (!isDragging || event.touches.length !== 1) return;
+            
+            const dx = (event.touches[0].clientX - dragStart.x) * (viewBox.width / svg.clientWidth);
+            const dy = (event.touches[0].clientY - dragStart.y) * (viewBox.height / svg.clientHeight);
+            
+            viewBox.x -= dx;
+            viewBox.y -= dy;
+            
+            updateViewBox();
+            
+            dragStart = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+            
+            event.preventDefault();
+        });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+    </script>
+</body>
+</html>
