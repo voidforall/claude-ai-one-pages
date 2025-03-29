@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five in a Row</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(15, 30px);
+            grid-template-rows: repeat(15, 30px);
+            gap: 0;
+            background-color: #e0bb7a;
+            border: 2px solid #333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cell {
+            width: 30px;
+            height: 30px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .cell:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .stone {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        
+        .black {
+            background-color: #000;
+            box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.5);
+        }
+        
+        .white {
+            background-color: #fff;
+            box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.5);
+        }
+        
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .difficulty {
+            padding: 5px 10px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .difficulty.active {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Five in a Row</h1>
+    <div class="status" id="status">Your turn (Black)</div>
+    <div class="board" id="board"></div>
+    <div class="controls">
+        <button class="difficulty active" id="easy">Easy</button>
+        <button class="difficulty" id="medium">Medium</button>
+        <button class="difficulty" id="hard">Hard</button>
+    </div>
+    <button id="restart">Restart Game</button>
+
+    <script>
+        // Game constants
+        const BOARD_SIZE = 15;
+        const EMPTY = 0;
+        const BLACK = 1;
+        const WHITE = 2;
+        const WIN_LENGTH = 5;
+        
+        // Game state
+        let board = [];
+        let currentPlayer = BLACK;
+        let gameOver = false;
+        let difficulty = 'easy';
+        
+        // DOM elements
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('status');
+        const restartButton = document.getElementById('restart');
+        const difficultyButtons = document.querySelectorAll('.difficulty');
+        
+        // Initialize the game
+        function initGame() {
+            // Clear the board array
+            board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+            
+            // Clear the board UI
+            boardElement.innerHTML = '';
+            
+            // Create the cells
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', handleCellClick);
+                    boardElement.appendChild(cell);
+                }
+            }
+            
+            // Reset game state
+            currentPlayer = BLACK;
+            gameOver = false;
+            statusElement.textContent = 'Your turn (Black)';
+        }
+        
+        // Handle cell click
+        function handleCellClick(event) {
+            if (gameOver || currentPlayer !== BLACK) return;
+            
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            
+            // Check if the cell is empty
+            if (board[row][col] === EMPTY) {
+                makeMove(row, col);
+                
+                // Check for win
+                if (checkWin(row, col, BLACK)) {
+                    endGame('You win!');
+                    return;
+                }
+                
+                // Check for draw
+                if (checkDraw()) {
+                    endGame('Draw!');
+                    return;
+                }
+                
+                // AI's turn
+                currentPlayer = WHITE;
+                statusElement.textContent = 'AI is thinking...';
+                
+                // Delay AI move for better UX
+                setTimeout(() => {
+                    makeAIMove();
+                }, 500);
+            }
+        }
+        
+        // Make a move
+        function makeMove(row, col, player = currentPlayer) {
+            board[row][col] = player;
+            
+            // Update UI
+            const cellIndex = row * BOARD_SIZE + col;
+            const cell = boardElement.children[cellIndex];
+            
+            const stone = document.createElement('div');
+            stone.className = `stone ${player === BLACK ? 'black' : 'white'}`;
+            cell.appendChild(stone);
+        }
+        
+        // AI move
+        function makeAIMove() {
+            let move;
+            
+            switch (difficulty) {
+                case 'easy':
+                    move = makeRandomMove();
+                    break;
+                case 'medium':
+                    move = makeSmartMove(2);
+                    break;
+                case 'hard':
+                    move = makeSmartMove(3);
+                    break;
+                default:
+                    move = makeRandomMove();
+            }
+            
+            if (move) {
+                makeMove(move.row, move.col, WHITE);
+                
+                // Check for win
+                if (checkWin(move.row, move.col, WHITE)) {
+                    endGame('AI wins!');
+                    return;
+                }
+                
+                // Check for draw
+                if (checkDraw()) {
+                    endGame('Draw!');
+                    return;
+                }
+                
+                // Player's turn
+                currentPlayer = BLACK;
+                statusElement.textContent = 'Your turn (Black)';
+            }
+        }
+        
+        // Make a random move (for easy AI)
+        function makeRandomMove() {
+            const emptyCells = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        emptyCells.push({ row, col });
+                    }
+                }
+            }
+            
+            if (emptyCells.length > 0) {
+                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+            
+            return null;
+        }
+        
+        // Make a smart move (for medium and hard AI)
+        function makeSmartMove(depth) {
+            // First, check if AI can win in one move
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        board[row][col] = WHITE;
+                        if (checkWin(row, col, WHITE)) {
+                            board[row][col] = EMPTY;
+                            return { row, col };
+                        }
+                        board[row][col] = EMPTY;
+                    }
+                }
+            }
+            
+            // Then, check if player can win in one move and block it
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        board[row][col] = BLACK;
+                        if (checkWin(row, col, BLACK)) {
+                            board[row][col] = EMPTY;
+                            return { row, col };
+                        }
+                        board[row][col] = EMPTY;
+                    }
+                }
+            }
+            
+            // For hard difficulty, use a more advanced evaluation
+            if (depth > 2) {
+                // Find the move with the highest score
+                let bestScore = -Infinity;
+                let bestMove = null;
+                
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        if (board[row][col] === EMPTY) {
+                            const score = evaluateMove(row, col);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = { row, col };
+                            }
+                        }
+                    }
+                }
+                
+                if (bestMove) {
+                    return bestMove;
+                }
+            }
+            
+            // If no strategic move is found, make a move near existing stones
+            return makeNearbyMove();
+        }
+        
+        // Make a move near existing stones (for medium AI)
+        function makeNearbyMove() {
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],           [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ];
+            
+            const candidates = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] !== EMPTY) {
+                        // Check adjacent cells
+                        for (const [dr, dc] of directions) {
+                            const newRow = row + dr;
+                            const newCol = col + dc;
+                            
+                            if (newRow >= 0 && newRow < BOARD_SIZE && 
+                                newCol >= 0 && newCol < BOARD_SIZE && 
+                                board[newRow][newCol] === EMPTY) {
+                                candidates.push({ row: newRow, col: newCol });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (candidates.length > 0) {
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            }
+            
+            // If no nearby moves, make a random move
+            return makeRandomMove();
+        }
+        
+        // Evaluate a move for the hard AI
+        function evaluateMove(row, col) {
+            const directions = [
+                [1, 0],   // Horizontal
+                [0, 1],   // Vertical
+                [1, 1],   // Diagonal \
+                [1, -1]   // Diagonal /
+            ];
+            
+            let score = 0;
+            
+            // Check each direction
+            for (const [dr, dc] of directions) {
+                // Check for potential lines for AI (WHITE)
+                board[row][col] = WHITE;
+                score += evaluateDirection(row, col, dr, dc, WHITE);
+                
+                // Check for potential lines for player (BLACK)
+                board[row][col] = BLACK;
+                score -= evaluateDirection(row, col, dr, dc, BLACK) * 1.1; // Slightly prioritize blocking
+                
+                // Reset
+                board[row][col] = EMPTY;
+            }
+            
+            // Add a small random factor to avoid predictability
+            score += Math.random() * 0.1;
+            
+            // Prefer center and avoid edges
+            const centerDistance = Math.sqrt(
+                Math.pow(row - BOARD_SIZE / 2, 2) + 
+                Math.pow(col - BOARD_SIZE / 2, 2)
+            );
+            score -= centerDistance * 0.1;
+            
+            return score;
+        }
+        
+        // Evaluate a direction for the hard AI
+        function evaluateDirection(row, col, dr, dc, player) {
+            let count = 1; // Count the stone at (row, col)
+            let openEnds = 0;
+            
+            // Count in positive direction
+            let r = row + dr;
+            let c = col + dc;
+            let blocked = false;
+            
+            while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                if (board[r][c] === player) {
+                    count++;
+                } else if (board[r][c] === EMPTY) {
+                    openEnds++;
+                    break;
+                } else {
+                    blocked = true;
+                    break;
+                }
+                r += dr;
+                c += dc;
+            }
+            
+            // Count in negative direction
+            r = row - dr;
+            c = col - dc;
+            
+            while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                if (board[r][c] === player) {
+                    count++;
+                } else if (board[r][c] === EMPTY) {
+                    openEnds++;
+                    break;
+                } else {
+                    blocked = true;
+                    break;
+                }
+                r -= dr;
+                c -= dc;
+            }
+            
+            // Calculate score based on count and open ends
+            if (count >= 5) return 10000; // Win
+            if (count === 4 && openEnds >= 1) return 1000; // Four with open end
+            if (count === 3 && openEnds === 2) return 100; // Open three
+            if (count === 3 && openEnds === 1) return 10; // Blocked three
+            if (count === 2 && openEnds === 2) return 5; // Open two
+            
+            return count * openEnds;
+        }
+        
+        // Check for a win
+        function checkWin(row, col, player) {
+            const directions = [
+                [1, 0],   // Horizontal
+                [0, 1],   // Vertical
+                [1, 1],   // Diagonal \
+                [1, -1]   // Diagonal /
+            ];
+            
+            for (const [dr, dc] of directions) {
+                let count = 1; // Count the stone at (row, col)
+                
+                // Count in positive direction
+                let r = row + dr;
+                let c = col + dc;
+                
+                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === player) {
+                    count++;
+                    r += dr;
+                    c += dc;
+                }
+                
+                // Count in negative direction
+                r = row - dr;
+                c = col - dc;
+                
+                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === player) {
+                    count++;
+                    r -= dr;
+                    c -= dc;
+                }
+                
+                if (count >= WIN_LENGTH) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Check for a draw
+        function checkDraw() {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        // End the game
+        function endGame(message) {
+            gameOver = true;
+            statusElement.textContent = message;
+        }
+        
+        // Event listeners
+        restartButton.addEventListener('click', initGame);
+        
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                difficultyButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                difficulty = button.id;
+                initGame();
+            });
+        });
+        
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>
