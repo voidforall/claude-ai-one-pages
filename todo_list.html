@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .todo-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #task-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        #add-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #add-button:hover {
+            background-color: #45a049;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        .task-text {
+            flex: 1;
+            margin-left: 10px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .action-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .save-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        .save-btn:hover {
+            background-color: #0b7dda;
+        }
+        .export-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        .export-btn:hover {
+            background-color: #e68a00;
+        }
+        .clear-btn {
+            background-color: #757575;
+            color: white;
+        }
+        .clear-btn:hover {
+            background-color: #616161;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="todo-container">
+        <h1>To-Do List</h1>
+        
+        <div class="input-group no-print">
+            <input type="text" id="task-input" placeholder="Add a new task...">
+            <button id="add-button">Add</button>
+        </div>
+        
+        <div id="todo-list-container">
+            <ul id="todo-list"></ul>
+        </div>
+        
+        <div class="action-buttons no-print">
+            <button class="action-btn save-btn" id="save-btn">Save List</button>
+            <button class="action-btn export-btn" id="export-btn">Export as PDF</button>
+            <button class="action-btn clear-btn" id="clear-btn">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskInput = document.getElementById('task-input');
+            const addButton = document.getElementById('add-button');
+            const todoList = document.getElementById('todo-list');
+            const saveButton = document.getElementById('save-btn');
+            const exportButton = document.getElementById('export-btn');
+            const clearButton = document.getElementById('clear-btn');
+            
+            // Load tasks from localStorage
+            loadTasks();
+            
+            // Add task when Add button is clicked
+            addButton.addEventListener('click', addTask);
+            
+            // Add task when Enter key is pressed
+            taskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+            
+            // Save tasks to localStorage
+            saveButton.addEventListener('click', function() {
+                saveTasks();
+                alert('Tasks saved successfully!');
+            });
+            
+            // Export as PDF
+            exportButton.addEventListener('click', exportToPDF);
+            
+            // Clear all tasks
+            clearButton.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all tasks?')) {
+                    todoList.innerHTML = '';
+                    saveTasks();
+                }
+            });
+            
+            function addTask() {
+                const taskText = taskInput.value.trim();
+                if (taskText === '') return;
+                
+                const li = createTaskElement(taskText, false);
+                todoList.appendChild(li);
+                
+                taskInput.value = '';
+                taskInput.focus();
+                
+                saveTasks();
+            }
+            
+            function createTaskElement(text, completed) {
+                const li = document.createElement('li');
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = completed;
+                checkbox.addEventListener('change', function() {
+                    taskSpan.classList.toggle('completed', this.checked);
+                    saveTasks();
+                });
+                
+                const taskSpan = document.createElement('span');
+                taskSpan.textContent = text;
+                taskSpan.className = 'task-text';
+                if (completed) {
+                    taskSpan.classList.add('completed');
+                }
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn no-print';
+                deleteBtn.addEventListener('click', function() {
+                    li.remove();
+                    saveTasks();
+                });
+                
+                li.appendChild(checkbox);
+                li.appendChild(taskSpan);
+                li.appendChild(deleteBtn);
+                
+                return li;
+            }
+            
+            function saveTasks() {
+                const tasks = [];
+                document.querySelectorAll('#todo-list li').forEach(function(taskItem) {
+                    const text = taskItem.querySelector('.task-text').textContent;
+                    const completed = taskItem.querySelector('input[type="checkbox"]').checked;
+                    tasks.push({ text, completed });
+                });
+                
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            
+            function loadTasks() {
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                
+                tasks.forEach(function(task) {
+                    const li = createTaskElement(task.text, task.completed);
+                    todoList.appendChild(li);
+                });
+            }
+            
+            function exportToPDF() {
+                // Temporarily hide delete buttons for PDF
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(btn => btn.style.display = 'none');
+                
+                const element = document.querySelector('.todo-container');
+                const opt = {
+                    margin: 1,
+                    filename: 'todo-list.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Restore delete buttons after PDF is generated
+                    deleteButtons.forEach(btn => btn.style.display = 'block');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
